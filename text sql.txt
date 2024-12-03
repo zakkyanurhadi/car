@@ -1,0 +1,289 @@
+Berikut adalah panduan langkah demi langkah untuk membuat proyek sistem penyewaan mobil untuk PT. Bandi Car, mulai dari membuat database hingga siap dihosting.
+
+## Langkah 1: Persiapan Database
+
+### 1. Buat Database
+1. Masuk ke MySQL menggunakan phpMyAdmin atau terminal.
+2. Buat database baru:
+   ```sql
+   CREATE DATABASE bandi_car;
+   ```
+
+### 2. Buat Tabel
+Buat tabel yang diperlukan untuk sistem penyewaan mobil.
+
+#### Tabel `users` (untuk penyewa)
+```sql
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(50) NOT NULL,
+    level INT NOT NULL
+);
+```
+
+#### Tabel `vehicles` (untuk mobil)
+```sql
+CREATE TABLE vehicles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    rental_price DECIMAL(10, 2) NOT NULL,
+    available INT NOT NULL DEFAULT 1
+);
+```
+
+#### Tabel `rentals` (untuk menyimpan transaksi penyewaan)
+```sql
+CREATE TABLE rentals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    vehicle_id INT NOT NULL,
+    rental_date DATETIME NOT NULL,
+    return_date DATETIME,
+    damage_fee DECIMAL(10, 2) DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+);
+```
+
+### 3. Isi Tabel dengan Data Awal
+```sql
+INSERT INTO users (username, password, level) VALUES 
+('Andi', '123', 1),
+('Anton', '321', 0);
+
+INSERT INTO vehicles (name, rental_price) VALUES 
+('Toyota Avanza', 300000),
+('Daihatsu Xenia', 250000);
+```
+
+## Langkah 2: Buat Antarmuka Pengguna
+
+### 1. Struktur Folder
+Buat struktur folder sebagai berikut:
+```
+/bandi_car
+    /css
+        style.css
+    /includes
+        db.php
+    /views
+        index.php
+        rent.php
+        return.php
+        report.php
+    /uploads
+```
+
+### 2. Koneksi Database (`includes/db.php`)
+```php
+<?php
+$host = 'localhost';
+$username = 'root';
+$password = 'root'; // ganti sesuai kebutuhan
+$database = 'bandi_car';
+
+$conn = new mysqli($host, $username, $password, $database);
+if ($conn->connect_error) {
+    die("Koneksi gagal: " . $conn->connect_error);
+}
+?>
+```
+
+### 3. Halaman Utama (`views/index.php`)
+```php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css">
+    <title>PT. Bandi Car</title>
+</head>
+<body>
+    <h1>Selamat Datang di PT. Bandi Car</h1>
+    <a href="rent.php">Sewa Mobil</a>
+    <a href="return.php">Kembali Mobil</a>
+    <a href="report.php">Laporan Penyewaan</a>
+</body>
+</html>
+```
+
+### 4. Halaman Penyewaan (`views/rent.php`)
+```php
+<?php
+include '../includes/db.php';
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css">
+    <title>Sewa Mobil</title>
+</head>
+<body>
+    <h1>Sewa Mobil</h1>
+    <form action="process_rent.php" method="post">
+        <label for="vehicle">Pilih Mobil:</label>
+        <select name="vehicle_id" id="vehicle">
+            <?php
+            $result = $conn->query("SELECT * FROM vehicles WHERE available = 1");
+            while ($row = $result->fetch_assoc()) {
+                echo "<option value='{$row['id']}'>{$row['name']} - Rp {$row['rental_price']}</option>";
+            }
+            ?>
+        </select>
+        <input type="submit" value="Sewa">
+    </form>
+</body>
+</html>
+```
+
+### 5. Halaman Proses Penyewaan (`views/process_rent.php`)
+```php
+<?php
+include '../includes/db.php';
+
+$vehicle_id = $_POST['vehicle_id'];
+$user_id = 1; // Ganti dengan logika untuk mendapatkan user yang sedang login
+$rental_date = date('Y-m-d H:i:s');
+
+$conn->query("INSERT INTO rentals (user_id, vehicle_id, rental_date) VALUES ('$user_id', '$vehicle_id', '$rental_date')");
+$conn->query("UPDATE vehicles SET available = 0 WHERE id = '$vehicle_id'");
+
+header('Location: index.php');
+?>
+```
+
+## Langkah 3: Siapkan untuk Hosting
+
+### 1. File `.htaccess` (jika diperlukan)
+Buat file `.htaccess` untuk mengatur pengalihan atau keamanan jika diperlukan.
+
+### 2. Upload ke Hosting
+1. Kompres folder `bandi_car` menjadi file ZIP.
+2. Masuk ke cPanel hosting.
+3. Unggah file ZIP ke direktori `public_html`.
+4. Ekstrak file ZIP di server.
+5. Sesuaikan pengaturan database di `db.php` sesuai dengan informasi hosting.
+
+### 3. Selesai
+Setelah langkah di atas, sistem penyewaan mobil PT. Bandi Car siap digunakan di hosting. Pastikan untuk menguji semua fungsionalitas dan memperbaiki bug jika diperlukan.
+
+Jika ada pertanyaan lebih lanjut atau butuh bantuan tambahan, silakan beri tahu!
+
+
+
+
+
+
+
+
+
+Untuk membuat halaman utama lebih menarik, kita bisa menambahkan beberapa elemen berikut:
+
+1. **Desain yang lebih baik dengan CSS**
+2. **Gambar latar belakang**
+3. **Tombol yang lebih menarik**
+4. **Deskripsi singkat tentang layanan**
+5. **Navigasi yang jelas**
+
+Berikut adalah contoh kode HTML dan CSS untuk halaman utama yang lebih menarik.
+
+### 1. Halaman Utama (`views/index.php`)
+```php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css">
+    <title>PT. Bandi Car</title>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Selamat Datang di PT. Bandi Car</h1>
+            <p>Solusi penyewaan mobil terbaik untuk kebutuhan Anda.</p>
+        </header>
+        
+        <nav>
+            <a href="rent.php" class="button">Sewa Mobil</a>
+            <a href="return.php" class="button">Kembali Mobil</a>
+            <a href="report.php" class="button">Laporan Penyewaan</a>
+        </nav>
+
+        <footer>
+            <p>&copy; 2024 PT. Bandi Car. Semua hak dilindungi.</p>
+        </footer>
+    </div>
+</body>
+</html>
+```
+
+### 2. CSS (`css/style.css`)
+```css
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-image: url('https://example.com/background.jpg'); /* Ganti dengan URL gambar latar belakang */
+    background-size: cover;
+    color: #fff;
+}
+
+.container {
+    text-align: center;
+    padding: 50px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    margin: 50px auto;
+    width: 80%;
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+header p {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+}
+
+nav {
+    margin: 20px 0;
+}
+
+.button {
+    background-color: #FF9900;
+    color: #fff;
+    padding: 15px 25px;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+    margin: 5px;
+}
+
+.button:hover {
+    background-color: #e68a00;
+}
+
+footer {
+    margin-top: 30px;
+    font-size: 0.9em;
+}
+```
+
+### Penjelasan
+- **Gambar Latar Belakang**: Menambahkan gambar latar belakang untuk memberikan kesan visual yang menarik. Ganti URL gambar sesuai kebutuhan.
+- **Desain Responsif**: Menggunakan pengaturan `width: 80%` untuk memastikan konten tetap terlihat baik di layar kecil.
+- **Header yang Menarik**: Menambahkan deskripsi singkat di bawah judul untuk menarik perhatian pengguna.
+- **Tombol yang Menarik**: Menggunakan warna cerah dan efek hover untuk tombol navigasi agar lebih interaktif.
+- **Footer**: Menyediakan informasi hak cipta di bagian bawah halaman.
+
+Dengan perubahan ini, halaman utama PT. Bandi Car akan terlihat lebih profesional dan menarik bagi pengunjung. Jika ada yang ingin ditambahkan atau diubah, silakan beri tahu!
+
+
+
